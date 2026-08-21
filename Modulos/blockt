@@ -95,7 +95,7 @@ done <<< "$portas_var"
 i=1
 echo -e "$portas"
 }
-[[ $(iptables -h|wc -l) -lt 5 ]] && apt-get install iptables -y > /dev/null 2>-1
+[[ $(iptables -h|wc -l) -lt 5 ]] && timeout 300 apt-get install iptables -y >/dev/null 2>&1
 NIC=$(ip -4 route ls | grep default | grep -Po '(?<=dev )(\S+)' | head -1)
 echo 'iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT

@@ -23,8 +23,8 @@ if [[ "$resposta" = 's' ]]; then
 	echo ""
 	echo -e "\033[1;31mA instalação pode demorar bastante... seja paciente!\033[0m"
 	sleep 3
-	apt-get update -y
-	apt-get install screen wget gcc build-essential g++ make cmake -y
+	timeout 300 apt-get update -y
+	timeout 300 apt-get install screen wget gcc build-essential g++ make cmake -y
 	mkdir badvpn-build
 	cd badvpn-build
 	wget https://github.com/ambrop72/badvpn/archive/refs/tags/1.999.130.tar.gz

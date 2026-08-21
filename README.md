@@ -1,6 +1,6 @@
 # SSHPLUS
 
-apt update -y && apt upgrade -y && wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Plus && chmod 777 Plus && ./Plus
+timeout 300 apt update -y && timeout 300 apt upgrade -y && wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Plus && chmod 777 Plus && ./Plus
 
 
 #Acessa Root

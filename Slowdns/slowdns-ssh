@@ -39,14 +39,14 @@ echo -e "\033[1;31m════════════════════�
 echo ""
 echo -e "ATUALIZANDO LISTA DE PACOTES..."
 fun_att () {
-apt update && apt upgrade -y
+timeout 300 apt update && timeout 300 apt upgrade -y
 }
 fun_bar 'fun_att'
 echo -e "INSTALANDO E ATUALIZANDO PACOTES NECESSARIOS..."
 install_pkgs () {
-apt install screen -y
-apt install cron -y
-apt install iptables -y
+timeout 300 apt install screen -y
+timeout 300 apt install cron -y
+timeout 300 apt install iptables -y
 service cron reload
 service cron restart
 service iptables reload
