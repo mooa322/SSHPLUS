@@ -72,6 +72,13 @@ SCOLOR='\033[0m'
 
 	}
 
+	start_sqfilter() {
+		[[ ! -f /etc/squid/sqfilter.ports ]] && return
+		screen -list | grep -wq 'sqfilter' && screen -r -S sqfilter -X quit >/dev/null 2>&1
+		screen -dmS sqfilter python3 /etc/SSHPlus/sqfilter.py "$(cat /etc/squid/sqfilter.ports)" 31280
+		sed -i '/sqfilter.py/d' /etc/autostart >/dev/null 2>&1
+		echo -e "screen -list | grep -wq 'sqfilter' || screen -dmS sqfilter python3 /etc/SSHPlus/sqfilter.py \"\$(cat /etc/squid/sqfilter.ports 2>/dev/null)\" 31280" >>/etc/autostart
+	}
 	inst_sqd() {
 		if netstat -nltp | grep 'squid' 1>/dev/null 2>/dev/null; then
 			echo -e "\E[41;1;37m            REMOVER SQUID PROXY              \E[0m"
@@ -82,6 +89,8 @@ SCOLOR='\033[0m'
 				echo -e "\n\033[1;32mREMOVENDO O SQUID PROXY !\033[0m"
 				echo ""
 				rem_sqd() {
+					screen -list | grep -wq 'sqfilter' && screen -r -S sqfilter -X quit >/dev/null 2>&1
+					sed -i '/sqfilter.py/d' /etc/autostart >/dev/null 2>&1
 					[[ -d "/etc/squid" ]] && {
 						apt-get remove squid -y >/dev/null 2>&1
 						apt-get purge squid -y >/dev/null 2>&1
@@ -166,9 +175,18 @@ SCOLOR='\033[0m'
 				#Portas
 			EOF
 			for Pts in $(echo -e $portass); do
-				echo -e "http_port $Pts" >>$var_sqd
 				[[ -f "/usr/sbin/ufw" ]] && ufw allow $Pts/tcp
 			done
+			# O Squid 6 (Ubuntu 24.04) recusa qualquer linha de payload que
+			# nao seja um header HTTP valido (comum em apps tipo HTTP
+			# Injector/NPV Tunnel pra enganar o DPI da operadora) com "400
+			# Bad Request" e fecha a conexao antes do CONNECT real ser lido.
+			# Por isso o Squid passa a escutar so em 127.0.0.1, e o
+			# sqfilter.py escuta nas portas publicas de verdade, corrigindo
+			# essas linhas antes de repassar pro Squid -- sem precisar
+			# editar o payload do app.
+			echo -e "http_port 127.0.0.1:31280" >>$var_sqd
+			echo "$portass" >/etc/squid/sqfilter.ports
 			cat <<-EOF >>$var_sqd
 				#Nome squid
 				visible_hostname SSHPLUS 
@@ -187,6 +205,7 @@ SCOLOR='\033[0m'
 					/etc/init.d/squid3 restart
 					service squid3 restart
 				}
+				start_sqfilter
 			}
 			echo -e "\n\033[1;32mCONFIGURANDO SQUID PROXY\033[0m"
 			echo ""
@@ -222,11 +241,12 @@ SCOLOR='\033[0m'
 		verif_ptrs $pt
 		echo -e "\n\033[1;32mADICIONANDO PORTA AO SQUID!"
 		echo ""
-		sed -i "s/#Portas/#Portas\nhttp_port $pt/g" $var_sqd
+		[[ -f "/usr/sbin/ufw" ]] && ufw allow $pt/tcp
+		echo "$(cat /etc/squid/sqfilter.ports 2>/dev/null) $pt" >/etc/squid/sqfilter.ports
 		fun_bar 'sleep 2'
 		echo -e "\n\033[1;32mREINICIANDO O SQUID!"
 		echo ""
-		fun_bar 'service squid restart' 'service squid3 restart'
+		fun_bar 'start_sqfilter'
 		echo -e "\n\033[1;32mPORTA ADICIONADA COM SUCESSO!"
 		sleep 3
 		clear
@@ -255,14 +275,15 @@ SCOLOR='\033[0m'
 			clear
 			fun_conexao
 		}
-		if grep -E "$pt" $var_sqd >/dev/null 2>&1; then
+		if grep -wq "$pt" /etc/squid/sqfilter.ports 2>/dev/null; then
 			echo -e "\n\033[1;32mREMOVENDO PORTA DO SQUID!"
 			echo ""
-			sed -i "/http_port $pt/d" $var_sqd
+			echo "$(cat /etc/squid/sqfilter.ports 2>/dev/null | tr ' ' '\n' | grep -vw "$pt" | xargs)" >/etc/squid/sqfilter.ports
+			[[ -f "/usr/sbin/ufw" ]] && ufw delete allow $pt/tcp >/dev/null 2>&1
 			fun_bar 'sleep 3'
 			echo -e "\n\033[1;32mREINICIANDO O SQUID!"
 			echo ""
-			fun_bar 'service squid restart' 'service squid3 restart'
+			fun_bar 'start_sqfilter'
 			echo -e "\n\033[1;32mPORTA REMOVIDA COM SUCESSO!"
 			sleep 3.5s
 			clear
@@ -279,7 +300,11 @@ SCOLOR='\033[0m'
 		[[ "$(netstat -nplt | grep -c 'squid')" = "0" ]] && inst_sqd
 		echo -e "\E[44;1;37m          GERENCIAR SQUID PROXY           \E[0m"
 		[[ "$(netstat -nplt | grep -c 'squid')" != "0" ]] && {
-			sqdp=$(netstat -nplt | grep 'squid' | awk -F ":" {'print $4'} | xargs)
+			# As portas publicas de verdade sao do sqfilter.py (na frente do
+			# Squid), nao do proprio Squid (que agora so escuta em
+			# 127.0.0.1:31280) -- por isso ficam guardadas nesse arquivo em
+			# vez de extraidas do netstat.
+			sqdp=$(cat /etc/squid/sqfilter.ports 2>/dev/null)
 			echo -e "\n\033[1;33mPORTAS\033[1;37m: \033[1;32m$sqdp"
 			VarSqdOn="REMOVER SQUID PROXY"
 		} || {
@@ -2098,7 +2123,7 @@ exit 0' >$RCLOCAL
 				sts2="\033[1;31m○ "
 			}
 			[[ "$(netstat -tlpn | grep 'squid' | wc -l)" != '0' ]] && {
-				echo -e "\033[1;32mSERVICO: \033[1;33mSQUID \033[1;32mPORTA: \033[1;37m$(netstat -nplt | grep 'squid' | awk -F ":" {'print $4'} | xargs)"
+				echo -e "\033[1;32mSERVICO: \033[1;33mSQUID \033[1;32mPORTA: \033[1;37m$(cat /etc/squid/sqfilter.ports 2>/dev/null)"
 				sts1="\033[1;32m◉ "
 			} || {
 				sts1="\033[1;31m○ "
