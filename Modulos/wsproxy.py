@@ -110,34 +110,59 @@ class ConnectionHandler(threading.Thread):
         finally:
             self.targetClosed = True
 
+    def isHttpRequest(self, buf):
+        # Um cliente SSH/SSL puro (sem payload/websocket) nao manda um
+        # pedido HTTP -- ou nao manda nada e fica esperando o banner do
+        # servidor (comportamento normal do protocolo SSH), ou manda os
+        # bytes brutos do handshake SSH. So trata como HTTP/websocket se
+        # a primeira linha realmente parecer um request-line HTTP.
+        try:
+            line = buf.split(b'\r\n', 1)[0]
+            method, _, ver = line.rpartition(b' ')
+            return bool(method) and ver.startswith(b'HTTP/')
+        except Exception:
+            return False
+
     def run(self):
         try:
-            self.client_buffer = self.client.recv(BUFLEN)
+            self.client.settimeout(3)
+            try:
+                self.client_buffer = self.client.recv(BUFLEN)
+            except socket.timeout:
+                self.client_buffer = b''
+            self.client.settimeout(None)
 
-            hostPort = self.findHeader(self.client_buffer, 'X-Real-Host')
+            if self.client_buffer and self.isHttpRequest(self.client_buffer):
+                hostPort = self.findHeader(self.client_buffer, 'X-Real-Host')
 
-            if hostPort == '':
-                hostPort = DEFAULT_HOST
+                if hostPort == '':
+                    hostPort = DEFAULT_HOST
 
-            split = self.findHeader(self.client_buffer, 'X-Split')
+                split = self.findHeader(self.client_buffer, 'X-Split')
 
-            if split != '':
-                self.client.recv(BUFLEN)
+                if split != '':
+                    self.client.recv(BUFLEN)
 
-            if hostPort != '':
-                passwd = self.findHeader(self.client_buffer, 'X-Pass')
+                if hostPort != '':
+                    passwd = self.findHeader(self.client_buffer, 'X-Pass')
 
-                if len(PASS) != 0 and passwd == PASS:
-                    self.method_CONNECT(hostPort)
-                elif len(PASS) != 0 and passwd != PASS:
-                    self.client.send(b'HTTP/1.1 400 WrongPass!\r\n\r\n')
-                elif hostPort.startswith('127.0.0.1') or hostPort.startswith('localhost'):
-                    self.method_CONNECT(hostPort)
+                    if len(PASS) != 0 and passwd == PASS:
+                        self.method_CONNECT(hostPort)
+                    elif len(PASS) != 0 and passwd != PASS:
+                        self.client.send(b'HTTP/1.1 400 WrongPass!\r\n\r\n')
+                    elif hostPort.startswith('127.0.0.1') or hostPort.startswith('localhost'):
+                        self.method_CONNECT(hostPort)
+                    else:
+                        self.client.send(b'HTTP/1.1 403 Forbidden!\r\n\r\n')
                 else:
-                    self.client.send(b'HTTP/1.1 403 Forbidden!\r\n\r\n')
+                    print('- No X-Real-Host!')
+                    self.client.send(b'HTTP/1.1 400 NoXRealHost!\r\n\r\n')
             else:
-                print('- No X-Real-Host!')
-                self.client.send(b'HTTP/1.1 400 NoXRealHost!\r\n\r\n')
+                # Sem payload/websocket (SSL puro): conecta direto no
+                # backend, sem mandar a resposta HTTP 101 e sem descartar
+                # os bytes que o cliente ja tiver mandado, para nao
+                # quebrar o handshake do SSH/SSL puro.
+                self.method_DIRECT(DEFAULT_HOST)
 
         except Exception as e:
             self.log += ' - error: ' + str(e)
@@ -184,6 +209,17 @@ class ConnectionHandler(threading.Thread):
 
         self.connect_target(path)
         self.client.sendall(RESPONSE)
+        self.client_buffer = b''
+
+        self.server.printLog(self.log)
+        self.doCONNECT()
+
+    def method_DIRECT(self, path):
+        self.log += ' - DIRECT ' + path
+
+        self.connect_target(path)
+        if self.client_buffer:
+            self.target.sendall(self.client_buffer)
         self.client_buffer = b''
 
         self.server.printLog(self.log)
