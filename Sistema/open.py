@@ -111,9 +111,33 @@ class ConnectionHandler(threading.Thread):
         finally:
             self.targetClosed = True
 
+    def isHttpRequest(self, buf):
+        # Um cliente SSH/SSL puro (sem payload) nao manda um pedido HTTP --
+        # ou nao manda nada e fica esperando o banner do servidor
+        # (comportamento normal do protocolo SSH), ou manda os bytes brutos
+        # do handshake SSH. So trata como HTTP/proxy se a primeira linha
+        # realmente parecer um request-line HTTP.
+        try:
+            line = buf.split(b'\r\n', 1)[0]
+            method, _, ver = line.rpartition(b' ')
+            return bool(method) and ver.startswith(b'HTTP/')
+        except Exception:
+            return False
+
     def run(self):
         try:
-            self.client_buffer = self.client.recv(BUFLEN)
+            self.client.settimeout(3)
+            try:
+                self.client_buffer = self.client.recv(BUFLEN)
+            except socket.timeout:
+                self.client_buffer = b''
+            self.client.settimeout(None)
+
+            if not (self.client_buffer and self.isHttpRequest(self.client_buffer)):
+                # Sem payload (SSL puro): conecta direto no backend, sem
+                # mandar resposta HTTP e sem descartar bytes ja recebidos.
+                self.method_DIRECT(DEFAULT_HOST)
+                return
 
             hostPort = self.findHeader(self.client_buffer, 'X-Real-Host')
 
@@ -184,6 +208,15 @@ class ConnectionHandler(threading.Thread):
         self.log += ' - CONNECT ' + path
         self.connect_target(path)
         self.client.sendall(RESPONSE)
+        self.client_buffer = b''
+        self.server.printLog(self.log)
+        self.doCONNECT()
+
+    def method_DIRECT(self, path):
+        self.log += ' - DIRECT ' + path
+        self.connect_target(path)
+        if self.client_buffer:
+            self.target.sendall(self.client_buffer)
         self.client_buffer = b''
         self.server.printLog(self.log)
         self.doCONNECT()
