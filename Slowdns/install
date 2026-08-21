@@ -40,7 +40,7 @@ echo ""
 echo -e "BAIXANDO DEPENDENCIAS..."
 echo ""
 fun_att () {
-apt install ncurses-utils -y
+apt install ncurses-bin -y
 mkdir /etc/slowdns
 cd /etc/slowdns
 wget https://github.com/mooa322/SSHPLUS/raw/main/Slowdns/dns-server; chmod +x dns-server

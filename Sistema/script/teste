@@ -133,7 +133,7 @@ if useradd -M -N -s /bin/false $usuario -e $validade > /dev/null 2>/dev/null
         	break
         else
         	ShellBot.sendMessage --chat_id ${message_chat_id[$id]} \
-        	--text "$(echo -e <b>Senha invalida !</b>)" \
+        	--text "$(echo -e "<b>Senha invalida !</b>")" \
         	--parse_mode html
         	ShellBot.sendMessage --chat_id ${message_chat_id[$id]} \
         	--text "$(echo -e $msg_ex)" \
@@ -142,7 +142,7 @@ if useradd -M -N -s /bin/false $usuario -e $validade > /dev/null 2>/dev/null
         fi
 else
 	ShellBot.sendMessage --chat_id ${message_chat_id[$id]} \
-	--text "$(echo -e <b>Erro ao criar conta SSH !</b>)" \
+	--text "$(echo -e "<b>Erro ao criar conta SSH !</b>")" \
 	--parse_mode html
 	break
 fi	
