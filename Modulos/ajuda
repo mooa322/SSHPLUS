@@ -33,3 +33,6 @@ echo -e " \033[1;37m[\033[1;31m27\033[1;37m] - \033[1;33m Atualiza o script SSHP
 echo -e " \033[1;37m[\033[1;31m28\033[1;37m] - \033[1;33m Remove o script SSHPLUS"
 echo -e " \033[1;37m[\033[1;31m29\033[1;37m] - \033[1;33m Exibe informacoes sobre o script"
 echo -e " \033[1;37m[\033[1;31m30\033[1;37m] - \033[1;33m Retorna ao menu anterior\033[0m"
+echo ""
+echo -e " \033[1;32mDICA: \033[1;33mdigite \033[1;37matualizar\033[1;33m a qualquer momento para verificar\033[0m"
+echo -e " \033[1;33matualizacoes, sem precisar navegar pelo menu.\033[0m"
