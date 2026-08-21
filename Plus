@@ -59,21 +59,10 @@ function verif_key2() {
 }
 
 otimize_python() {
-    # INSTALA PYTHON AO PYTHON2
-    apt-get install python -y >/dev/null 2>&1
-    apt-get install python2 -y >/dev/null 2>&1
-    # INSTALA PYTHON3.6 AO PYTHON3.9
-    apt-get install python3.6 -y >/dev/null 2>&1
-    apt-get install python3.7 -y >/dev/null 2>&1
-    apt-get install python3.8 -y >/dev/null 2>&1
-    apt-get install python3.9 -y >/dev/null 2>&1
-    # CRIA ALTERNATIVAS PYTHON
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1 >/dev/null 2>&1
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 3 >/dev/null 2>&1
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2 >/dev/null 2>&1
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 4 >/dev/null 2>&1
+    # GARANTE O PYTHON3 (E O COMANDO 'python' APONTANDO PARA ELE, VIA python-is-python3)
+    apt-get install python3 -y >/dev/null 2>&1
+    apt-get install python-is-python3 -y >/dev/null 2>&1
     # INSTALA PIP
-    apt install pip -y
     apt install python3-pip -y
     # INSTALA SOCAT
     apt install socat -y
@@ -182,11 +171,11 @@ if [[ "$resposta" = '1' ]]; then
     echo -e "\033[1;33mALGUNS PACOTES SAO EXTREMAMENTE  NECESSÁRIOS !\033[0m"
     echo ""
     inst_pct() {
-        _pacotes=("bc" "screen" "nano" "unzip" "lsof" "netstat" "net-tools" "dos2unix" "nload" "jq" "curl" "figlet" "python3" "python-pip" "python" "at")
+        _pacotes=("bc" "screen" "nano" "unzip" "lsof" "net-tools" "dos2unix" "nload" "jq" "curl" "figlet" "python3" "python3-pip" "python-is-python3" "at")
         for _prog in ${_pacotes[@]}; do
             apt install $_prog -y
         done
-        pip install speedtest-cli
+        pip3 install --break-system-packages speedtest-cli
     }
     fun_bar 'inst_pct'
     [[ -f "/usr/sbin/ufw" ]] && ufw allow 443/tcp
@@ -293,11 +282,11 @@ elif [[ "$resposta" = '2' ]]; then
     echo -e "\033[1;33mALGUNS PACOTES SAO EXTREMAMENTE  NECESSÁRIOS !\033[0m"
     echo ""
     inst_pct() {
-        _pacotes=("bc" "screen" "nano" "unzip" "lsof" "netstat" "net-tools" "dos2unix" "nload" "jq" "curl" "figlet" "python3" "python-pip" "python" "at")
+        _pacotes=("bc" "screen" "nano" "unzip" "lsof" "net-tools" "dos2unix" "nload" "jq" "curl" "figlet" "python3" "python3-pip" "python-is-python3" "at")
         for _prog in ${_pacotes[@]}; do
             apt install $_prog -y
         done
-        pip install speedtest-cli
+        pip3 install --break-system-packages speedtest-cli
     }
     fun_bar 'inst_pct'
     [[ -f "/usr/sbin/ufw" ]] && ufw allow 443/tcp

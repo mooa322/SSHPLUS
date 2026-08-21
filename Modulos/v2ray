@@ -95,7 +95,7 @@ removeV2Ray() {
     bash <(curl -L -s $CLEAN_IPTABLES_SHELL)
 
     #卸载multi-v2ray
-    pip uninstall v2ray_util -y
+    pip uninstall --break-system-packages v2ray_util -y
     rm -rf /usr/share/bash-completion/completions/v2ray.bash >/dev/null 2>&1
     rm -rf /usr/share/bash-completion/completions/v2ray >/dev/null 2>&1
     rm -rf /usr/share/bash-completion/completions/xray >/dev/null 2>&1
@@ -162,7 +162,7 @@ installDependent(){
 updateProject() {
     [[ ! $(type pip 2>/dev/null) ]] && colorEcho $RED "pip no install!" && exit 1
 
-    pip install -U v2ray_util
+    pip install --break-system-packages -U v2ray_util
 
     if [[ -e $UTIL_PATH ]];then
         [[ -z $(cat $UTIL_PATH|grep lang) ]] && echo "lang=en" >> $UTIL_PATH

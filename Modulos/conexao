@@ -125,27 +125,8 @@ SCOLOR='\033[0m'
 			for porta in $(echo -e $portass); do
 				verif_ptrs $porta
 			done
-			[[ $(grep -wc '14' /etc/issue.net) != '0' ]] || [[ $(grep -wc '8' /etc/issue.net) != '0' ]] && {
-				echo -e "\n\033[1;32mINSTALANDO SQUID PROXY\033[0m\n"
-				fun_bar 'apt update -y' "apt install squid3 -y"
-			} || {
-				echo -e "\n\033[1;31m[\033[1;36m1\033[1;31m] \033[1;37m• \033[1;33mSQUID VERSAO 3.3.X\n\033[1;31m[\033[1;36m2\033[1;31m] \033[1;37m• \033[1;33mSQUID VERSAO 3.5.X\033[0m\n"
-				read -p "$(echo -e "\033[1;32mINFORME UMA OPÇÃO \033[1;37m: ")" -e -i 1 opc
-				[[ -z "$opc" ]] && {
-					echo -e "\n\033[1;31mOpcao invalida!"
-					sleep 2
-					fun_conexao
-				}
-				[[ "$opc" != '1' ]] && {
-					[[ "$opc" != '2' ]] && {
-						echo -e "\n\033[1;31mOpcao invalida !"
-						sleep 2
-						fun_conexao
-					}
-				}
-				echo -e "\n\033[1;32mINSTALANDO SQUID PROXY\033[0m\n"
-				fun_bar 'apt update -y' "instsqd $opc"
-			}
+			echo -e "\n\033[1;32mINSTALANDO SQUID PROXY\033[0m\n"
+			fun_bar 'apt update -y' 'apt install squid -y'
 			if [[ -d "/etc/squid/" ]]; then
 				var_sqd="/etc/squid/squid.conf"
 				var_pay="/etc/squid/payload.txt"
@@ -1491,7 +1472,7 @@ exit 0' >$RCLOCAL
 		clear
 		echo -e "\E[44;1;37m            GERENCIAR PROXY SOCKS             \E[0m"
 		echo ""
-		[[ $(netstat -nplt | grep -wc 'python') != '0' ]] && {
+		[[ $(netstat -nplt | grep -wc 'python3') != '0' ]] && {
 			sks='\033[1;32mON'
 			echo -e "\033[1;33mPORTAS\033[1;37m: \033[1;32m$(netstat -nplt | grep 'python' | awk {'print $4'} | cut -d: -f2 | xargs)"
 		} || {
@@ -1549,12 +1530,12 @@ exit 0' >$RCLOCAL
 				verif_ptrs $porta
 				fun_inisocks() {
 					sleep 1
-					screen -dmS proxy python /etc/SSHPlus/proxy.py $porta
+					screen -dmS proxy python3 /etc/SSHPlus/proxy.py $porta
 					[[ $(grep -wc "proxy.py" /etc/autostart) = '0' ]] && {
-						echo -e "netstat -tlpn | grep -w $porta > /dev/null || {  screen -r -S 'proxy' -X quit;  screen -dmS proxy python /etc/SSHPlus/proxy.py $porta; }" >>/etc/autostart
+						echo -e "netstat -tlpn | grep -w $porta > /dev/null || {  screen -r -S 'proxy' -X quit;  screen -dmS proxy python3 /etc/SSHPlus/proxy.py $porta; }" >>/etc/autostart
 					} || {
 						sed -i '/proxy.py/d' /etc/autostart
-						echo -e "netstat -tlpn | grep -w $porta > /dev/null || {  screen -r -S 'proxy' -X quit;  screen -dmS proxy python /etc/SSHPlus/proxy.py $porta; }" >>/etc/autostart
+						echo -e "netstat -tlpn | grep -w $porta > /dev/null || {  screen -r -S 'proxy' -X quit;  screen -dmS proxy python3 /etc/SSHPlus/proxy.py $porta; }" >>/etc/autostart
 					}
 				}
 				echo ""
@@ -1604,12 +1585,12 @@ exit 0' >$RCLOCAL
 				verif_ptrs $porta
 				fun_iniwssocks() {
 					sleep 1
-					screen -dmS ws python /etc/SSHPlus/wsproxy.py $porta
+					screen -dmS ws python3 /etc/SSHPlus/wsproxy.py $porta
 					[[ $(grep -wc "wsproxy.py" /etc/autostart) = '0' ]] && {
-						echo -e "netstat -tlpn | grep -w $porta > /dev/null || {  screen -r -S 'ws' -X quit;  screen -dmS ws python /etc/SSHPlus/wsproxy.py $porta; }" >>/etc/autostart
+						echo -e "netstat -tlpn | grep -w $porta > /dev/null || {  screen -r -S 'ws' -X quit;  screen -dmS ws python3 /etc/SSHPlus/wsproxy.py $porta; }" >>/etc/autostart
 					} || {
 						sed -i '/wsproxy.py/d' /etc/autostart
-						echo -e "netstat -tlpn | grep -w $porta > /dev/null || {  screen -r -S 'ws' -X quit;  screen -dmS ws python /etc/SSHPlus/wsproxy.py $porta; }" >>/etc/autostart
+						echo -e "netstat -tlpn | grep -w $porta > /dev/null || {  screen -r -S 'ws' -X quit;  screen -dmS ws python3 /etc/SSHPlus/wsproxy.py $porta; }" >>/etc/autostart
 					}
 				}
 				echo ""
@@ -1664,12 +1645,12 @@ exit 0' >$RCLOCAL
 						sed -i "s/$listoldop/$listopen/" /etc/SSHPlus/open.py
 					}
 					sleep 1
-					screen -dmS openpy python /etc/SSHPlus/open.py $porta
+					screen -dmS openpy python3 /etc/SSHPlus/open.py $porta
 					[[ $(grep -wc "open.py" /etc/autostart) = '0' ]] && {
-						echo -e "netstat -tlpn | grep -w $porta > /dev/null || {  screen -r -S 'openpy' -X quit;  screen -dmS openpy python /etc/SSHPlus/open.py $porta; }" >>/etc/autostart
+						echo -e "netstat -tlpn | grep -w $porta > /dev/null || {  screen -r -S 'openpy' -X quit;  screen -dmS openpy python3 /etc/SSHPlus/open.py $porta; }" >>/etc/autostart
 					} || {
 						sed -i '/open.py/d' /etc/autostart
-						echo -e "netstat -tlpn | grep -w $porta > /dev/null || {  screen -r -S 'openpy' -X quit;  screen -dmS openpy python /etc/SSHPlus/open.py $porta; }" >>/etc/autostart
+						echo -e "netstat -tlpn | grep -w $porta > /dev/null || {  screen -r -S 'openpy' -X quit;  screen -dmS openpy python3 /etc/SSHPlus/open.py $porta; }" >>/etc/autostart
 					}
 				}
 				echo ""
@@ -1704,7 +1685,7 @@ exit 0' >$RCLOCAL
 				echo ""
 				abrirptsks() {
 					sleep 1
-					screen -dmS proxy python /etc/SSHPlus/proxy.py $porta
+					screen -dmS proxy python3 /etc/SSHPlus/proxy.py $porta
 					sleep 1
 				}
 				fun_bar 'abrirptsks'
@@ -1795,7 +1776,7 @@ exit 0' >$RCLOCAL
 						screen -wipe >/dev/null
 						_Ptsks="$(cat /tmp/Pt_sks)"
 						sleep 1
-						screen -dmS proxy python /etc/SSHPlus/proxy.py $_Ptsks
+						screen -dmS proxy python3 /etc/SSHPlus/proxy.py $_Ptsks
 						rm /tmp/Pt_sks
 					fi
 				}
@@ -1890,7 +1871,7 @@ exit 0' >$RCLOCAL
 						screen -wipe >/dev/null
 						_Ptwssks="$(cat /tmp/Pt_wssks)"
 						sleep 1
-						screen -dmS ws python /etc/SSHPlus/wsproxy.py $_Ptwssks
+						screen -dmS ws python3 /etc/SSHPlus/wsproxy.py $_Ptwssks
 						rm /tmp/Pt_wssks
 					fi
 				}

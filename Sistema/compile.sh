@@ -24,15 +24,7 @@ if [[ "$resposta" = 's' ]]; then
 	echo -e "\033[1;31mA instalação pode demorar bastante... seja paciente!\033[0m"
 	sleep 3
 	apt-get update -y
-	apt-get install screen wget gcc build-essential g++ make -y
-	wget http://www.cmake.org/files/v2.8/cmake-2.8.12.tar.gz
-	tar xvzf cmake*.tar.gz
-	cd cmake*
-	./bootstrap --prefix=/usr
-	make 
-	make install
-	cd ..
-	rm -r cmake*
+	apt-get install screen wget gcc build-essential g++ make cmake -y
 	mkdir badvpn-build
 	cd badvpn-build
 	wget https://github.com/ambrop72/badvpn/archive/refs/tags/1.999.130.tar.gz
@@ -44,8 +36,6 @@ if [[ "$resposta" = 's' ]]; then
 	rm -r bad*
 	cd ..
 	rm -r badvpn-build
-    chmod +x badvpn.sh
-    ./badvpn.sh
 	echo "#!/bin/bash
 	badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 512 --max-connections-for-client 8" > /bin/badudp
 	chmod +x /bin/badudp
