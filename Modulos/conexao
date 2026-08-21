@@ -1,4 +1,9 @@
 #!/bin/bash
+# SSHPLUS: impede que apt/needrestart abram dialogos interativos que travam
+# o script para sempre (a saida vai toda para /dev/null, o usuario nao ve nada).
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
 #====================================================
 #	@OMentalista
 #====================================================
@@ -145,12 +150,11 @@ SCOLOR='\033[0m'
 				.speedtest.net/
 			EOF
 			cat <<-EOF >$var_sqd
-				acl url1 dstdomain -i 127.0.0.1
-				acl url2 dstdomain -i localhost
-				acl url3 dstdomain -i $ipdovps
-				acl url4 dstdomain -i /SSHPLUS?
+				acl url1 dstdomain 127.0.0.1
+				acl url2 dstdomain localhost
+				acl url3 dstdomain $ipdovps
+				acl url4 dstdomain /SSHPLUS?
 				acl payload url_regex -i "$var_pay"
-				acl all src 0.0.0.0/0
 
 				http_access allow url1
 				http_access allow url2
@@ -170,7 +174,7 @@ SCOLOR='\033[0m'
 				visible_hostname SSHPLUS 
 				via off
 				forwarded_for off
-				pipeline_prefetch off
+				pipeline_prefetch 0
 			EOF
 			sqd_conf() {
 				[[ -d "/etc/squid/" ]] && {
@@ -421,9 +425,12 @@ SCOLOR='\033[0m'
 				}
 				fun_bar 'fun_instdrop'
 				fun_ports() {
-					sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear >/dev/null 2>&1
-					sed -i "s/DROPBEAR_PORT=22/DROPBEAR_PORT=$porta/g" /etc/default/dropbear >/dev/null 2>&1
-					sed -i 's/DROPBEAR_EXTRA_ARGS=/DROPBEAR_EXTRA_ARGS="-p 110"/g' /etc/default/dropbear >/dev/null 2>&1
+					# No Ubuntu 24.04 o /etc/default/dropbear vem com TODAS as opcoes
+					# comentadas e sem a linha NO_START, entao os seds antigos nao
+					# alteravam nada: o dropbear continuava subindo na porta 22 do
+					# unit systemd e conflitava com o sshd. Reescreve as chaves.
+					sed -i '/^[# ]*NO_START=/d; /^[# ]*DROPBEAR_PORT=/d; /^[# ]*DROPBEAR_EXTRA_ARGS=/d' /etc/default/dropbear >/dev/null 2>&1
+					printf 'NO_START=0\nDROPBEAR_PORT=%s\nDROPBEAR_EXTRA_ARGS="-p 110"\n' "$porta" >>/etc/default/dropbear 2>/dev/null
 				}
 				echo ""
 				echo -e "\033[1;32mCONFIGURANDO PORTA DROPBEAR !\033[0m"

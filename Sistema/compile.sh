@@ -1,4 +1,9 @@
 #!/bin/bash
+# SSHPLUS: impede que apt/needrestart abram dialogos interativos que travam
+# o script para sempre (a saida vai toda para /dev/null, o usuario nao ve nada).
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
 
 tput setaf 7 ; tput setab 4 ; tput bold ; printf '%50s%s%-20s\n' "BadVPN, created By Mr.Devim" ; tput sgr0
 if [ -f "/usr/local/bin/badvpn-udpgw" ]
