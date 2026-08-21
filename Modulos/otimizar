@@ -1,4 +1,9 @@
 #!/bin/bash
+# SSHPLUS: impede que apt/needrestart abram dialogos interativos que travam
+# o script para sempre (a saida vai toda para /dev/null, o usuario nao ve nada).
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
 #===================================================
 #	SCRIPT: OTIMIZAR	SSHPLUS MANAGER
 #	DESENVOLVIDO POR:	CRAZY_VPN

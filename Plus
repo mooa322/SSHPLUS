@@ -10,11 +10,23 @@ clear
 # ISSO O 'apt install' FICA TRAVADO SILENCIOSAMENTE (SEM NENHUM ERRO VISIVEL)
 # ESPERANDO O LOCK LIBERAR. AJUSTA ISSO ANTES DE QUALQUER APT/DPKG:
 export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
 echo 'DPkg::Lock::Timeout "300";
 Dpkg::Options {
    "--force-confdef";
    "--force-confold";
 }' >/etc/apt/apt.conf.d/99sshplus-noninteractive 2>/dev/null
+# O needrestart (padrao no Ubuntu 22.04+) abre um dialogo de tela cheia
+# perguntando quais servicos reiniciar / avisando de kernel novo. Como o
+# instalador manda toda a saida para /dev/null, esse dialogo fica esperando
+# uma tecla que o usuario nunca ve -> instalacao travada para sempre.
+[[ -d /etc/needrestart ]] && {
+    mkdir -p /etc/needrestart/conf.d
+    printf '%s\n' "\$nrconf{restart} = 'a';" "\$nrconf{kernelhints} = -1;" \
+        "\$nrconf{ui} = 'NeedRestart::UI::stdio';" \
+        >/etc/needrestart/conf.d/99sshplus.conf 2>/dev/null
+}
 echo -e "\033[1;33m[\033[1;31m!\033[1;33m] \033[1;32mVERIFICANDO SE O APT ESTA LIVRE (VPS RECEM-CRIADAS DEMORAM UM POUCO)...\033[0m"
 systemctl stop unattended-upgrades.service apt-daily.service apt-daily-upgrade.service >/dev/null 2>&1
 _lockwait=0
