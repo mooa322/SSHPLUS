@@ -791,16 +791,19 @@ SCOLOR='\033[0m'
 				clear
 				echo -e "Corrigindo SSL CLARO"
 				cd /etc/stunnel/
-				rm -rf stunnel.conf
 				rm -rf stunnel.pem
-				wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Install/cert
-				wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Install/key
-				wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Install/stunnel
+				timeout 60 wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Install/cert
+				timeout 60 wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Install/key
 				mv cert cert.pem
 				mv key key.pem
-				mv stunnel stunnel.conf
 				chmod 777 cert.pem
 				chmod 777 key.pem
+				# O Install/stunnel baixado antes sempre trazia "connect =
+				# 127.0.0.1:22", sobrescrevendo a escolha do usuario (padrao/22
+				# ou websocket/80) e a porta externa (accept), mesmo quando ele
+				# tinha acabado de escolher WEBSOCKET ou uma porta diferente de
+				# 443 no passo anterior. Reescreve preservando $portssl/$porta:
+				echo -e "cert = /etc/stunnel/cert.pem\nkey = /etc/stunnel/key.pem\nclient = no\n\n[stunnel]\nconnect = 127.0.0.1:${portssl}\naccept = ${porta}" >stunnel.conf
 				chmod 777 stunnel.conf
 				service stunnel4 restart
 				# Reforca o boot-enable: esse bloco reescreve a conf depois da
