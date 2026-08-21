@@ -133,7 +133,7 @@ initslow() {
         echo -e "\n${YELLOW}ATIVADO O SLOWDNS...${SCOLOR}"
         [[ ! -e /etc/iptables/rules.v4 ]] && {
             configdns > /dev/null 2>&1
-            DEBIAN_FRONTEND=noninteractive apt install -y iptables-persistent >/dev/null 2>&1
+            DEBIAN_FRONTEND=noninteractive timeout 300 apt install -y iptables-persistent >/dev/null 2>&1
         } || {
             sleep 2
             configdns > /dev/null 2>&1

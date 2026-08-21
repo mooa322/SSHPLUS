@@ -37,7 +37,7 @@ echo -e "\E[44;1;37m                Otimizar Servidor                \E[0m"
 echo ""
 echo -e "\033[1;32m               Atualizando pacotes\033[0m"
 echo ""
-fun_bar 'apt-get update -y' 'apt-get upgrade -y'
+fun_bar 'timeout 300 apt-get update -y' 'timeout 300 apt-get upgrade -y'
 echo ""
 echo -e "\033[1;32m      Corrigindo problemas de dependências"
 echo""

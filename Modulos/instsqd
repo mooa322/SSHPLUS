@@ -1,5 +1,5 @@
 clear
 op=$1
 [[ ! -d /usr/share/.plus ]] && exit 0
-apt update -y >/dev/null 2>&1
-apt install squid -y >/dev/null 2>&1
+timeout 300 apt update -y >/dev/null 2>&1
+timeout 300 apt install squid -y >/dev/null 2>&1
