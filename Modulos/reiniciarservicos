@@ -22,10 +22,12 @@ echo ""
 sleep 1
 if [[ -e /etc/squid/squid.conf ]]; then
 echo -ne "\033[1;33mREINICIANDO SQUID PROXY "; fun_prog 'service squid restart'
+[[ -f /etc/squid/sqfilter.ports ]] && { screen -list | grep -wq 'sqfilter' && screen -r -S sqfilter -X quit >/dev/null 2>&1; screen -dmS sqfilter python3 /etc/SSHPlus/sqfilter.py "$(cat /etc/squid/sqfilter.ports)" 31280; }
 echo ""
 sleep 1
 elif [[ -e /etc/squid3/squid.conf ]]; then
 echo -ne "\033[1;33mREINICIANDO SQUID PROXY "; fun_prog 'service squid3 restart'
+[[ -f /etc/squid/sqfilter.ports ]] && { screen -list | grep -wq 'sqfilter' && screen -r -S sqfilter -X quit >/dev/null 2>&1; screen -dmS sqfilter python3 /etc/SSHPlus/sqfilter.py "$(cat /etc/squid/sqfilter.ports)" 31280; }
 echo ""
 sleep 1
 fi
