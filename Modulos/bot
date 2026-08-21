@@ -739,13 +739,13 @@ infovps() {
     ram1=$(free -h | grep -i mem | awk {'print $2'})
     usoram=$(free -m | awk 'NR==2{printf "%.2f%%\t\t", $3*100/$2 }')
     total=$(cat -n /root/usuarios.db | tail -n 1 | awk '{print $1}')
-    echo -e "SSH: $(grep 'Port' /etc/ssh/sshd_config | cut -d' ' -f2 | grep -v 'no' | xargs)" >$PTs
-    [[ -e "/etc/stunnel/stunnel.conf" ]] && echo -e "SSL Tunel: $(netstat -nplt | grep 'stunnel' | awk {'print $4'} | cut -d: -f2 | xargs)" >>$PTs
-    [[ -e "/etc/openvpn/server.conf" ]] && echo -e "Openvpn: $(netstat -nplt | grep 'openvpn' | awk {'print $4'} | cut -d: -f2 | xargs)" >>$PTs
-    [[ "$(netstat -nplt | grep 'sslh' | wc -l)" != '0' ]] && echo -e "SSlh: $(netstat -nplt | grep 'sslh' | awk {'print $4'} | cut -d: -f2 | xargs)" >>$PTs
+    echo -e "SSH: $(mkdir -p /run/sshd 2>/dev/null; _p=$(sshd -T 2>/dev/null | awk '/^port /{print $2}' | xargs); [[ -z "$_p" ]] && _p=$(awk '/^[[:space:]]*Port[[:space:]]+[0-9]+/{print $2}' /etc/ssh/sshd_config | xargs); [[ -z "$_p" ]] && _p=22; echo $_p)" >$PTs
+    [[ -e "/etc/stunnel/stunnel.conf" ]] && echo -e "SSL Tunel: $(netstat -nplt | grep 'stunnel' | awk {'print $4'} | awk -F: {'print $NF'} | xargs)" >>$PTs
+    [[ -e "/etc/openvpn/server.conf" ]] && echo -e "Openvpn: $(netstat -nplt | grep 'openvpn' | awk {'print $4'} | awk -F: {'print $NF'} | xargs)" >>$PTs
+    [[ "$(netstat -nplt | grep 'sslh' | wc -l)" != '0' ]] && echo -e "SSlh: $(netstat -nplt | grep 'sslh' | awk {'print $4'} | awk -F: {'print $NF'} | xargs)" >>$PTs
     [[ "$(netstat -nplt | grep 'squid' | wc -l)" != '0' ]] && echo -e "Squid: $(netstat -nplt | grep 'squid' | awk -F ":" {'print $4'} | xargs)" >>$PTs
     [[ "$(netstat -nltp | grep 'dropbear' | wc -l)" != '0' ]] && echo -e "DropBear: $(netstat -nplt | grep 'dropbear' | awk -F ":" {'print $4'} | xargs)" >>$PTs
-    [[ "$(netstat -nplt | grep 'python' | wc -l)" != '0' ]] && echo -e "Proxy Socks: $(netstat -nplt | grep 'python' | awk {'print $4'} | cut -d: -f2 | xargs)" >>$PTs
+    [[ "$(netstat -nplt | grep 'python' | wc -l)" != '0' ]] && echo -e "Proxy Socks: $(netstat -nplt | grep 'python' | awk {'print $4'} | awk -F: {'print $NF'} | xargs)" >>$PTs
     local info
     info="=×=×=×=×=×=×=×=×=×=×=×=×=×=\n"
     info+="<b>INFORMACOES DO SERVIDOR</b>\n"
