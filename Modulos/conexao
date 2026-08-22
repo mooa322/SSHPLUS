@@ -926,6 +926,11 @@ SCOLOR='\033[0m'
 				} || {
 					ovpnssl=$(echo -e "\033[1;31m○ ")
 				}
+				[[ -e /etc/openvpn/server2.conf ]] && {
+					dualproto=$(echo -e "\033[1;32m◉ ")
+				} || {
+					dualproto=$(echo -e "\033[1;31m○ ")
+				}
 				echo -e "\E[44;1;37m          GERENCIAR OPENVPN           \E[0m"
 				echo ""
 				echo -e "\033[1;33mPORTA\033[1;37m: \033[1;32m$opnp"
@@ -937,6 +942,7 @@ SCOLOR='\033[0m'
 				echo -e "\033[1;31m[\033[1;36m5\033[1;31m] \033[1;37m• \033[1;33mALTERAR HOST DNS"
 				echo -e "\033[1;31m[\033[1;36m6\033[1;31m] \033[1;37m• \033[1;33mOVPN SSL $ovpnssl\033[0m"
 				echo -e "\033[1;31m[\033[1;36m7\033[1;31m] \033[1;37m• \033[1;33mOVPN VIA PROXY/WEBSOCKET/SQUID\033[0m"
+				echo -e "\033[1;31m[\033[1;36m8\033[1;31m] \033[1;37m• \033[1;33mADICIONAR TCP+UDP JUNTOS $dualproto\033[0m"
 				echo -e "\033[1;31m[\033[1;36m0\033[1;31m] \033[1;37m• \033[1;33mVOLTAR"
 				echo ""
 				echo -ne "\033[1;32mOQUE DESEJA FAZER \033[1;33m?\033[1;31m?\033[1;37m "
@@ -1380,6 +1386,174 @@ SCOLOR='\033[0m'
 					[[ "$resp_ovpnproxy" = 's' || "$resp_ovpnproxy" = 'S' ]] && fun_socks
 					sleep 1
 					fun_openvpn
+					;;
+				8)
+					clear
+					proto1=$(grep '^proto ' /etc/openvpn/server.conf | awk '{print $2}')
+					[[ "$proto1" = 'tcp' ]] && proto2='udp' || proto2='tcp'
+					if [[ -e /etc/openvpn/server2.conf ]]; then
+						echo -e "\E[41;1;37m      GERENCIAR SEGUNDO PROTOCOLO (TCP+UDP)      \E[0m"
+						echo ""
+						pt2=$(grep '^port ' /etc/openvpn/server2.conf | awk '{print $2}')
+						pr2=$(grep '^proto ' /etc/openvpn/server2.conf | awk '{print $2}')
+						echo -e "\033[1;33mSEGUNDO PROTOCOLO EM USO: \033[1;32m$pr2 \033[1;33mPORTA: \033[1;32m$pt2"
+						echo ""
+						echo -e "\033[1;31m[\033[1;36m1\033[1;31m] \033[1;37m• \033[1;33mREMOVER SEGUNDO PROTOCOLO"
+						echo -e "\033[1;31m[\033[1;36m0\033[1;31m] \033[1;37m• \033[1;33mVOLTAR"
+						echo ""
+						echo -ne "\033[1;32mOQUE DESEJA FAZER \033[1;33m?\033[1;37m "
+						read resp_dual
+						[[ "$resp_dual" = '1' ]] && {
+							fun_rm_dualproto() {
+								PORT2=$(grep '^port ' /etc/openvpn/server2.conf | awk '{print $2}')
+								PROTO2=$(grep '^proto ' /etc/openvpn/server2.conf | awk '{print $2}')
+								if pgrep systemd-journal; then
+									systemctl stop openvpn@server2.service
+									systemctl disable openvpn@server2.service
+								else
+									[[ -f /run/openvpn/server2.pid ]] && kill $(cat /run/openvpn/server2.pid) 2>/dev/null
+									pkill -f 'openvpn.*server2.conf' 2>/dev/null
+								fi
+								sleep 1
+								iptables -t nat -D POSTROUTING -s 10.9.0.0/24 -j SNAT --to $IP
+								sed -i '/iptables -t nat -A POSTROUTING -s 10.9.0.0\/24 -j SNAT --to /d' $RCLOCAL
+								iptables -D INPUT -p $PROTO2 --dport $PORT2 -j ACCEPT 2>/dev/null
+								iptables -D FORWARD -s 10.9.0.0/24 -j ACCEPT 2>/dev/null
+								sed -i "/iptables -I INPUT -p $PROTO2 --dport $PORT2 -j ACCEPT/d" $RCLOCAL
+								sed -i '/iptables -I FORWARD -s 10.9.0.0\/24 -j ACCEPT/d' $RCLOCAL
+								rm -f /etc/openvpn/server2.conf /etc/openvpn/client-common2.txt /etc/openvpn/openvpn2-status.log /etc/openvpn/ipp2.txt
+								rm -f ~/SSHPLUS-*-2.ovpn
+							}
+							echo -e "\033[1;32mREMOVENDO SEGUNDO PROTOCOLO!\033[1;33m"
+							fun_bar 'fun_rm_dualproto'
+							echo ""
+							echo -e "\033[1;32mSEGUNDO PROTOCOLO REMOVIDO COM SUCESSO!\033[0m"
+							sleep 2
+							fun_openvpn
+						} || fun_openvpn
+					else
+						echo -e "\E[44;1;37m   ADICIONAR SEGUNDO PROTOCOLO (TCP+UDP)   \E[0m"
+						echo ""
+						echo -e "\033[1;33mO OpenVPN atual usa \033[1;32m$proto1\033[1;33m na porta \033[1;32m$opnp\033[1;33m."
+						echo -e "Isso sobe um \033[1;32msegundo\033[1;33m servidor OpenVPN em \033[1;32m$proto2\033[1;33m,"
+						echo -e "rodando ao mesmo tempo (mesmos certificados/usuarios),"
+						echo -e "sem mexer no que ja esta funcionando.\033[0m"
+						echo ""
+						echo -ne "\033[1;32mDESEJA CONTINUAR \033[1;31m? \033[1;33m[s/n]:\033[1;37m "
+						read resp_dual
+						[[ "$resp_dual" = 's' || "$resp_dual" = 'S' ]] && {
+							echo ""
+							read -p "$(echo -e "\033[1;32mQUAL PORTA DESEJA UTILIZAR PRO \033[1;37m$proto2\033[1;32m? \033[1;37m")" -e -i "$opnp" porta2
+							[[ -z "$porta2" ]] && {
+								echo -e "\033[1;31mPorta invalida!"
+								sleep 2
+								fun_openvpn
+							}
+							[[ "$porta2" = "$opnp" && "$proto2" = "$proto1" ]] && {
+								echo -e "\033[1;31mMesma porta e protocolo do OpenVPN atual!"
+								sleep 2
+								fun_openvpn
+							}
+							verif_ptrs $porta2
+							echo ""
+							echo -e "\033[1;32mCRIANDO SEGUNDO PROTOCOLO!\033[1;33m"
+							echo ""
+							fun_dualproto_conf() {
+								echo "port $porta2
+proto $proto2
+dev tun
+sndbuf 0
+rcvbuf 0
+ca ca.crt
+cert server.crt
+key server.key
+dh dh.pem
+tls-auth ta.key 0
+topology subnet
+server 10.9.0.0 255.255.255.0
+ifconfig-pool-persist ipp2.txt" >/etc/openvpn/server2.conf
+								grep '^push "dhcp-option DNS' /etc/openvpn/server.conf >>/etc/openvpn/server2.conf
+								echo 'push "redirect-gateway def1 bypass-dhcp"' >>/etc/openvpn/server2.conf
+								echo "keepalive 10 120
+float
+cipher AES-256-CBC
+comp-lzo yes
+user nobody
+group $GROUPNAME
+persist-key
+persist-tun
+status openvpn2-status.log
+management localhost 7506
+verb 3
+crl-verify crl.pem
+client-to-client
+verify-client-cert none
+username-as-common-name
+plugin $(find /usr -type f -name 'openvpn-plugin-auth-pam.so') login
+duplicate-cn" >>/etc/openvpn/server2.conf
+								iptables -t nat -A POSTROUTING -s 10.9.0.0/24 -j SNAT --to $IP
+								sed -i "1 a\iptables -t nat -A POSTROUTING -s 10.9.0.0/24 -j SNAT --to $IP" $RCLOCAL
+								if pgrep firewalld; then
+									firewall-cmd --zone=public --add-port=$porta2/$proto2
+									firewall-cmd --zone=trusted --add-source=10.9.0.0/24
+									firewall-cmd --permanent --zone=public --add-port=$porta2/$proto2
+									firewall-cmd --permanent --zone=trusted --add-source=10.9.0.0/24
+								fi
+								if iptables -L -n | grep -qE 'REJECT|DROP'; then
+									iptables -I INPUT -p $proto2 --dport $porta2 -j ACCEPT
+									iptables -I FORWARD -s 10.9.0.0/24 -j ACCEPT
+									sed -i "1 a\iptables -I INPUT -p $proto2 --dport $porta2 -j ACCEPT" $RCLOCAL
+									sed -i "1 a\iptables -I FORWARD -s 10.9.0.0/24 -j ACCEPT" $RCLOCAL
+								fi
+								if pgrep systemd-journal; then
+									systemctl restart openvpn@server2.service
+									systemctl enable openvpn@server2.service
+								else
+									/etc/init.d/openvpn restart
+								fi
+								cat <<-EOF >/etc/openvpn/client-common2.txt
+									client
+									dev tun
+									proto $proto2
+									sndbuf 0
+									rcvbuf 0
+									remote 127.0.0.1 $porta2
+									resolv-retry 5
+									nobind
+									persist-key
+									persist-tun
+									remote-cert-tls server
+									cipher AES-256-CBC
+									comp-lzo yes
+									setenv opt block-outside-dns
+									key-direction 1
+									verb 3
+									auth-user-pass
+									keepalive 10 120
+									float
+								EOF
+								cp /etc/openvpn/client-common2.txt ~/SSHPLUS-$proto2-2.ovpn
+								echo "<ca>" >>~/SSHPLUS-$proto2-2.ovpn
+								cat /etc/openvpn/easy-rsa/pki/ca.crt >>~/SSHPLUS-$proto2-2.ovpn
+								echo "</ca>" >>~/SSHPLUS-$proto2-2.ovpn
+								echo "<cert>" >>~/SSHPLUS-$proto2-2.ovpn
+								cat /etc/openvpn/easy-rsa/pki/issued/SSHPLUS.crt >>~/SSHPLUS-$proto2-2.ovpn
+								echo "</cert>" >>~/SSHPLUS-$proto2-2.ovpn
+								echo "<key>" >>~/SSHPLUS-$proto2-2.ovpn
+								cat /etc/openvpn/easy-rsa/pki/private/SSHPLUS.key >>~/SSHPLUS-$proto2-2.ovpn
+								echo "</key>" >>~/SSHPLUS-$proto2-2.ovpn
+								echo "<tls-auth>" >>~/SSHPLUS-$proto2-2.ovpn
+								cat /etc/openvpn/ta.key >>~/SSHPLUS-$proto2-2.ovpn
+								echo "</tls-auth>" >>~/SSHPLUS-$proto2-2.ovpn
+							}
+							fun_bar 'fun_dualproto_conf'
+							echo ""
+							netstat -nplu 2>/dev/null | grep -w openvpn | grep -w "$porta2" >/dev/null || netstat -nplt 2>/dev/null | grep -w openvpn | grep -w "$porta2" >/dev/null
+							[[ $? = 0 ]] && echo -e "\033[1;32mSEGUNDO PROTOCOLO ($proto2) INSTALADO COM SUCESSO! \033[1;31mPORTA: \033[1;33m$porta2\033[0m" || echo -e "\033[1;31mERRO AO CRIAR SEGUNDO PROTOCOLO!\033[0m"
+							sleep 3
+							fun_openvpn
+						} || fun_openvpn
+					fi
 					;;
 				0)
 					fun_conexao
