@@ -1,40 +1,40 @@
 #!/bin/bash
 [[ $(screen -list| grep -c 'bot_teste') == '0' ]] && {
     clear
-    echo -e "\E[44;1;37m     ATIVACÃO BOT SSH TESTE     \E[0m"
+    echo -e "\E[44;1;37m     ACTIVATE SSH TEST BOT     \E[0m"
     echo ""
-    echo -ne "\n\033[1;32mINFORME O TOKEN\033[1;37m: "
+    echo -ne "\n\033[1;32mENTER THE TOKEN\033[1;37m: "
     read token
     clear
-    echo "-----------MODELO-----------"
+    echo "-----------TEMPLATE-----------"
     echo "=×=×=×=×=×=×=×=×=×=×=×=×=×="
-    echo "   MENSAGEM DE BOAS VINDAS   "
+    echo "   WELCOME MESSAGE   "
     echo "=×=×=×=×=×=×=×=×=×=×=×=×=×="
-    echo "        MENSAGEM FINAL         "
+    echo "        FINAL MESSAGE         "
     echo ""
-    echo -ne "\033[1;32mMENSAGEM DE BOAS VINDAS:\033[1;37m "
+    echo -ne "\033[1;32mWELCOME MESSAGE:\033[1;37m "
     read bvindo
-    echo -ne "\033[1;32mMENSAGEM FINAL:\033[1;37m "
+    echo -ne "\033[1;32mFINAL MESSAGE:\033[1;37m "
     read mfinal
     clear
-    echo -ne "\033[1;32mNOME DO BOTÃO 1(GERADOR SSH):\033[1;37m "
+    echo -ne "\033[1;32mBUTTON 1 NAME (SSH GENERATOR):\033[1;37m "
     read bt1
     clear
-    echo -ne "\033[1;32mNOME DO BOTÃO 2(PERSONALIZADO):\033[1;37m "
+    echo -ne "\033[1;32mBUTTON 2 NAME (CUSTOM):\033[1;37m "
     read bt2
-    echo -ne "\033[1;32mLINK DO BOTÃO 2 (Ex: www.google.com): \033[1;37m "
+    echo -ne "\033[1;32mBUTTON 2 LINK (Ex: www.google.com): \033[1;37m "
     read link2
     clear
-    echo -ne "\033[1;32mNOME DO BOTÃO 3(PERSONALIZADO):\033[1;37m "
+    echo -ne "\033[1;32mBUTTON 3 NAME (CUSTOM):\033[1;37m "
     read bt3
-    echo -ne "\033[1;32mLINK DO BOTÃO 3 (Ex: www.google.com):\033[1;37m "
+    echo -ne "\033[1;32mBUTTON 3 LINK (Ex: www.google.com):\033[1;37m "
     read link3
     clear
-    echo -ne "\033[1;32mDURAÇÃO DO TESTE(EM HORAS):\033[1;37m "
+    echo -ne "\033[1;32mTEST DURATION (IN HOURS):\033[1;37m "
     read dtempo
     clear
     echo ""
-    echo -e "\033[1;32mINICIANDO BOT TESTE \033[0m\n"
+    echo -e "\033[1;32mSTARTING TEST BOT \033[0m\n"
     cd $HOME/BOT
     rm -rf $HOME/BOT/botssh
     wget https://www.dropbox.com/s/a7i10qa2j1dzri0/botssh >/dev/null 2>&1
@@ -52,11 +52,11 @@
     sleep 1
     screen -dmS bot_teste ./botssh $token> /dev/null 2>&1
     clear
-    echo "BOT ATIVADO"
+    echo "BOT ACTIVATED"
     menu
 } || {
     screen -r -S "bot_teste" -X quit
     clear
-    echo "BOT DESATIVADO"
+    echo "BOT DEACTIVATED"
     menu
 }

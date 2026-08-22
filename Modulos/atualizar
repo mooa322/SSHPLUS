@@ -1,4 +1,4 @@
 #!/bin/bash
-# Atalho simples para verificar/instalar atualizacoes do SSHPLUS.
-# Basta digitar 'atualizar' no terminal a qualquer momento.
+# Simple shortcut to check/install SSHPLUS updates.
+# Just type 'atualizar' in the terminal at any time.
 exec attscript "$@"

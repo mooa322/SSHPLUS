@@ -3,7 +3,7 @@
 import socket, threading, select, sys, time
 from os import system
 system("clear")
-#conexao
+#connection
 IP = '0.0.0.0'
 try:
    PORT = int(sys.argv[1])
@@ -106,11 +106,11 @@ class ConnectionHandler(threading.Thread):
             self.targetClosed = True
 
     def isHttpRequest(self, buf):
-        # Um cliente SSH/SSL puro (sem payload) nao manda um pedido HTTP --
-        # ou nao manda nada e fica esperando o banner do servidor
-        # (comportamento normal do protocolo SSH), ou manda os bytes brutos
-        # do handshake SSH. So trata como HTTP/proxy se a primeira linha
-        # realmente parecer um request-line HTTP.
+        # A pure SSH/SSL client (no payload) does not send an HTTP request --
+        # it either sends nothing and waits for the server banner (normal
+        # SSH protocol behavior), or sends the raw bytes of the SSH
+        # handshake. Only treat it as HTTP/proxy if the first line really
+        # looks like an HTTP request-line.
         try:
             line = buf.split(b'\r\n', 1)[0]
             method, _, ver = line.rpartition(b' ')
@@ -247,7 +247,7 @@ class ConnectionHandler(threading.Thread):
 def main(host=IP, port=PORT):
     print("\033[0;34m━"*8,"\033[1;32m PROXY SOCKS","\033[0;34m━"*8,"\n")
     print("\033[1;33mIP:\033[1;32m " + IP)
-    print("\033[1;33mPORTA:\033[1;32m " + str(PORT) + "\n")
+    print("\033[1;33mPORT:\033[1;32m " + str(PORT) + "\n")
     print("\033[0;34m━"*10,"\033[1;32m SSHPLUS","\033[0;34m━\033[1;37m"*11,"\n")
     server = Server(IP, PORT)
     server.start()
@@ -255,7 +255,7 @@ def main(host=IP, port=PORT):
         try:
             time.sleep(2)
         except KeyboardInterrupt:
-            print('\nParando...')
+            print('\nStopping...')
             server.close()
             break
 if __name__ == '__main__':

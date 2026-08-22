@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 #
-# Filtro na frente do Squid Proxy do SSHPLUS.
+# Filter in front of the SSHPLUS Squid Proxy.
 #
-# Apps como HTTP Injector, NPV Tunnel, etc mandam payloads com uma linha
-# de "ruido" que nao e um header HTTP valido (sem ':', tipo separadores
-# "===FORCE===") antes do pedido real (normalmente um CONNECT), pra
-# confundir o DPI da operadora. O Squid moderno (6.x, o unico disponivel
-# no Ubuntu 24.04) rejeita qualquer linha assim com "400 Bad Request" e
-# FECHA a conexao -- quebrando o payload inteiro antes do pedido real
-# (o CONNECT) ser lido, mesmo que ele mesmo seja valido.
+# Apps like HTTP Injector, NPV Tunnel, etc send payloads with a "noise"
+# line that isn't a valid HTTP header (no ':', like separators
+# "===FORCE===") before the real request (usually a CONNECT), to
+# confuse the carrier's DPI. Modern Squid (6.x, the only one available
+# on Ubuntu 24.04) rejects any such line with "400 Bad Request" and
+# CLOSES the connection -- breaking the whole payload before the real
+# request (the CONNECT) is even read, even though it is itself valid.
 #
-# Este filtro escuta nas portas publicas que o usuario configurou (as
-# mesmas que ele digita no app) e o Squid de verdade passa a escutar so
-# em 127.0.0.1:SQUID_PORT (nao exposto). O filtro le o payload linha a
-# linha; qualquer linha que nao pareca um header valido (nem uma
-# request-line, nem em branco) e reescrita como um header inofensivo
-# antes de ser repassada pro Squid -- sem exigir nenhuma edicao no
-# payload do app do usuario. Depois que o pedido CONNECT (e o fim dos
-# headers dele) e visto, para de analisar linha a linha e vira um
-# repasse bruto nos dois sentidos (a partir dai e trafego do tunel).
+# This filter listens on the public ports the user configured (the
+# same ones they type into the app), and the real Squid now listens
+# only on 127.0.0.1:SQUID_PORT (not exposed). The filter reads the
+# payload line by line; any line that doesn't look like a valid header
+# (neither a request-line nor blank) is rewritten as a harmless header
+# before being forwarded to Squid -- without requiring any edit to the
+# user's app payload. Once the CONNECT request (and the end of its
+# headers) is seen, it stops parsing line by line and becomes a raw
+# two-way relay (from that point on it's tunnel traffic).
 import socket
 import threading
 import select
@@ -38,9 +38,9 @@ REQLINE_RE = re.compile(rb'^[A-Za-z]+ \S+ HTTP/\d\.\d$')
 def sanitize_line(line):
     if line == b'' or HEADER_RE.match(line) or REQLINE_RE.match(line):
         return line
-    # Nao parece um header HTTP nem uma linha de pedido: vira um header
-    # inofensivo (o Squid ignora headers que nao conhece) em vez de
-    # quebrar o parser dele.
+    # Doesn't look like an HTTP header or a request line: turn it into a
+    # harmless header (Squid ignores headers it doesn't know) instead of
+    # breaking its parser.
     return b'X-Ignore: ' + line.replace(b'\r', b'').replace(b'\n', b' ')
 
 

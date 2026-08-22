@@ -11,7 +11,7 @@ fun_online() {
     echo $CURRENT_ONLINES  > /var/www/html/server/online
 }
 while true; do
-    echo 'verificando...'
+    echo 'checking...'
 	fun_online > /dev/null 2>&1
 	sleep 15s
 done

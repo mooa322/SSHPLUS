@@ -1,5 +1,5 @@
-# SSHPLUS: impede que apt/needrestart abram dialogos interativos que travam
-# o script para sempre (a saida vai toda para /dev/null, o usuario nao ve nada).
+# SSHPLUS: prevents apt/needrestart from opening interactive dialogs that hang
+# the script forever (all output goes to /dev/null, so the user sees nothing).
 export DEBIAN_FRONTEND=noninteractive
 export NEEDRESTART_MODE=a
 export NEEDRESTART_SUSPEND=1

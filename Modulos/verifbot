@@ -34,6 +34,6 @@ for arq in $(ls /etc/bot/revenda); do
 		_days=$(($_diasR - 1))
 		sed -i "/\b$arq\b/ s/DIAS: $_diasR/DIAS: $_days/" /etc/bot/lista_ativos
 		sed -i "/DIAS_REVENDA/ s/$_diasR/$_days/" /etc/bot/revenda/$arq/$arq
-		echo $arq $_diasR DIAS ALTERADO PARA $_days
+		echo $arq $_diasR DAYS CHANGED TO $_days
 	}
 done
