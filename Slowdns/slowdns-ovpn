@@ -78,8 +78,8 @@ touch infons
 echo $nameserver > infons
 set_ns () {
 sleep 1
-wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Slowdns/ovpn/startdns
-wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Slowdns/ovpn/restartdns
+wget -O startdns https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Slowdns/ovpn/startdns
+wget -O restartdns https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Slowdns/ovpn/restartdns
 chmod +x startdns
 chmod +x restartdns
 sed -i "s;1234;$nameserver;g" /etc/slowdns/startdns > /dev/null 2>&1
