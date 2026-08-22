@@ -344,7 +344,7 @@ SCOLOR='\033[0m'
 	fun_drop() {
 		if netstat -nltp | grep 'dropbear' 1>/dev/null 2>/dev/null; then
 			clear
-			[[ $(netstat -nltp | grep -c 'dropbear') != '0' ]] && dpbr=$(netstat -nplt | grep 'dropbear' | awk -F ":" {'print $4'} | xargs) || sqdp="\033[1;31mINDISPONIVEL"
+			[[ $(netstat -nltp | grep -c 'dropbear') != '0' ]] && dpbr=$(netstat -nplt | grep 'dropbear' | awk {'print $4'} | awk -F: '{print $NF}' | xargs) || sqdp="\033[1;31mINDISPONIVEL"
 			if ps x | grep "limiter" | grep -v grep 1>/dev/null 2>/dev/null; then
 				stats='\033[1;32m◉ '
 			else
@@ -911,6 +911,19 @@ SCOLOR='\033[0m'
 				clear
 
 				opnp=$(cat /etc/openvpn/server.conf | grep "port" | awk {'print $2'})
+				# OVPN SSL/Squid/Proxy-Websocket so funcionam com uma instancia
+				# TCP (stunnel, Squid CONNECT e o open.py sao todos baseados em
+				# TCP). Descobre qual das instancias (a principal ou a segunda,
+				# se existir) e TCP, pra apontar essas features pra porta certa
+				# em vez de sempre assumir a instancia principal.
+				proto1=$(grep '^proto ' /etc/openvpn/server.conf | awk '{print $2}')
+				if [[ "$proto1" = 'tcp' ]]; then
+					opnp_tcp=$opnp
+				elif [[ -e /etc/openvpn/server2.conf ]] && [[ "$(grep '^proto ' /etc/openvpn/server2.conf | awk '{print $2}')" = 'tcp' ]]; then
+					opnp_tcp=$(grep '^port ' /etc/openvpn/server2.conf | awk '{print $2}')
+				else
+					opnp_tcp=''
+				fi
 				[[ -d /var/www/html/openvpn ]] && {
 					ovpnweb=$(echo -e "\033[1;32m◉ ")
 				} || {
@@ -1312,10 +1325,18 @@ SCOLOR='\033[0m'
 					else
 						echo -e "\E[44;1;37m           INSTALAR OVPN SSL           \E[0m"
 						echo ""
+						[[ -z "$opnp_tcp" ]] && {
+							echo -e "\033[1;31mOVPN SSL precisa de uma instancia OpenVPN em TCP"
+							echo -e "(o stunnel so encapsula TCP), mas voce so tem UDP"
+							echo -e "instalado. Adicione um segundo protocolo TCP na"
+							echo -e "opcao \033[1;33m[8] ADICIONAR TCP+UDP JUNTOS\033[1;31m primeiro.\033[0m"
+							sleep 4
+							fun_openvpn
+						}
 						echo -e "\033[1;33mIsso cria um SSL Tunnel dedicado (stunnel) na frente"
-						echo -e "do OpenVPN (porta atual: \033[1;32m$opnp\033[1;33m), permitindo conectar"
-						echo -e "via uma porta SSL (ex: 443) e cair direto no OpenVPN,"
-						echo -e "sem afetar o SSL Tunnel do SSH.\033[0m"
+						echo -e "do OpenVPN TCP (porta atual: \033[1;32m$opnp_tcp\033[1;33m), permitindo"
+						echo -e "conectar via uma porta SSL (ex: 443) e cair direto no"
+						echo -e "OpenVPN, sem afetar o SSL Tunnel do SSH.\033[0m"
 						echo ""
 						echo -ne "\033[1;32mDESEJA CONTINUAR \033[1;31m? \033[1;33m[s/n]:\033[1;37m "
 						read resp_ovpnssl
@@ -1348,7 +1369,7 @@ SCOLOR='\033[0m'
 									cat /tmp/ovpncert.pem /tmp/ovpnkey.pem >/etc/stunnel/openvpn.pem
 									rm -f /tmp/ovpnkey.pem /tmp/ovpncert.pem
 								}
-								echo -e "pid = /run/stunnel-openvpn.pid\ncert = /etc/stunnel/openvpn.pem\nclient = no\nsocket = a:SO_REUSEADDR=1\nsocket = l:TCP_NODELAY=1\nsocket = r:TCP_NODELAY=1\n\n[openvpn]\nconnect = 127.0.0.1:${opnp}\naccept = ${pt_ovpnssl}" >/etc/stunnel/openvpn.conf
+								echo -e "pid = /run/stunnel-openvpn.pid\ncert = /etc/stunnel/openvpn.pem\nclient = no\nsocket = a:SO_REUSEADDR=1\nsocket = l:TCP_NODELAY=1\nsocket = r:TCP_NODELAY=1\n\n[openvpn]\nconnect = 127.0.0.1:${opnp_tcp}\naccept = ${pt_ovpnssl}" >/etc/stunnel/openvpn.conf
 								pkill -f '^stunnel /etc/stunnel/openvpn.conf$' >/dev/null 2>&1
 								sleep 1
 								stunnel /etc/stunnel/openvpn.conf
@@ -1370,14 +1391,17 @@ SCOLOR='\033[0m'
 					clear
 					echo -e "\E[44;1;37m       OVPN VIA PROXY/WEBSOCKET/SQUID       \E[0m"
 					echo ""
-					echo -e "\033[1;33mO OpenVPN esta rodando na porta \033[1;32m$opnp\033[1;33m (interna)."
+					[[ -n "$opnp_tcp" ]] && echo -e "\033[1;33mOpenVPN TCP esta rodando na porta \033[1;32m$opnp_tcp\033[1;33m (interna)."
+					[[ -z "$opnp_tcp" ]] && echo -e "\033[1;31mVoce so tem OpenVPN em UDP -- essas 3 opcoes precisam"
+					[[ -z "$opnp_tcp" ]] && echo -e "de TCP (stunnel/Squid/proxy so encapsulam TCP). Adicione"
+					[[ -z "$opnp_tcp" ]] && echo -e "um segundo protocolo TCP na opcao [8] primeiro.\033[0m"
 					echo ""
 					echo -e "\033[1;33m• \033[1;37mPROXY/WEBSOCKET\033[1;33m: use a opcao \033[1;32mSOCKS OPENVPN\033[1;33m"
-					echo -e "  no menu \033[1;32mGERENCIAR PROXY SOCKS\033[1;33m (ja aponta pra essa"
-					echo -e "  porta automaticamente)."
+					echo -e "  no menu \033[1;32mGERENCIAR PROXY SOCKS\033[1;33m (ja aponta pra a"
+					echo -e "  instancia TCP automaticamente)."
 					echo ""
 					echo -e "\033[1;33m• \033[1;37mSQUID\033[1;33m: no app do cliente, configure o payload"
-					echo -e "  pra dar CONNECT em \033[1;32m127.0.0.1:$opnp\033[1;33m atraves da porta"
+					echo -e "  pra dar CONNECT em \033[1;32m127.0.0.1:$opnp_tcp\033[1;33m atraves da porta"
 					echo -e "  publica do Squid -- funciona sem nenhuma alteracao"
 					echo -e "  no Squid, do mesmo jeito que funciona com o SSH.\033[0m"
 					echo ""
@@ -1887,7 +1911,19 @@ exit 0' >$RCLOCAL
 					fun_conexao
 				}
 				verif_ptrs $porta
+				echo ""
+				echo -e "\033[1;31m[\033[1;36m1\033[1;31m] \033[1;33mOpenSSH \033[1;32m(Recomendado)"
+				echo -e "\033[1;31m[\033[1;36m2\033[1;31m] \033[1;33mDropbear"
+				echo ""
+				echo -ne "\033[1;32mQUAL BACKEND DESEJA USAR \033[1;33m?\033[1;37m: "
+				read resp_backend
 				fun_inisocks() {
+					if [[ "$resp_backend" = '2' ]]; then
+						dropbear_port=$(netstat -tlpn | grep 'dropbear' | awk {'print $4'} | awk -F: '{print $NF}' | xargs)
+						[[ -n "$dropbear_port" ]] && sed -i "s/^DEFAULT_HOST = .*/DEFAULT_HOST = '127.0.0.1:$dropbear_port'/" /etc/SSHPlus/proxy.py
+					else
+						sed -i "s/^DEFAULT_HOST = .*/DEFAULT_HOST = '0.0.0.0:22'/" /etc/SSHPlus/proxy.py
+					fi
 					sleep 1
 					screen -dmS proxy python3 /etc/SSHPlus/proxy.py $porta
 					[[ $(grep -wc "proxy.py" /etc/autostart) = '0' ]] && {
@@ -1942,7 +1978,19 @@ exit 0' >$RCLOCAL
 					fun_conexao
 				}
 				verif_ptrs $porta
+				echo ""
+				echo -e "\033[1;31m[\033[1;36m1\033[1;31m] \033[1;33mOpenSSH \033[1;32m(Recomendado)"
+				echo -e "\033[1;31m[\033[1;36m2\033[1;31m] \033[1;33mDropbear"
+				echo ""
+				echo -ne "\033[1;32mQUAL BACKEND DESEJA USAR \033[1;33m?\033[1;37m: "
+				read resp_backend
 				fun_iniwssocks() {
+					if [[ "$resp_backend" = '2' ]]; then
+						dropbear_port=$(netstat -tlpn | grep 'dropbear' | awk {'print $4'} | awk -F: '{print $NF}' | xargs)
+						[[ -n "$dropbear_port" ]] && sed -i "s/^DEFAULT_HOST = .*/DEFAULT_HOST = '127.0.0.1:$dropbear_port'/" /etc/SSHPlus/wsproxy.py
+					else
+						sed -i "s/^DEFAULT_HOST = .*/DEFAULT_HOST = '127.0.0.1:22'/" /etc/SSHPlus/wsproxy.py
+					fi
 					sleep 1
 					screen -dmS ws python3 /etc/SSHPlus/wsproxy.py $porta
 					[[ $(grep -wc "wsproxy.py" /etc/autostart) = '0' ]] && {
@@ -2416,7 +2464,7 @@ exit 0' >$RCLOCAL
 				sts3="\033[1;31m○ "
 			}
 			[[ "$(netstat -tlpn | grep 'dropbear' | wc -l)" != '0' ]] && {
-				echo -e "\033[1;32mSERVICO: \033[1;33mDROPBEAR \033[1;32mPORTA: \033[1;37m$(netstat -nplt | grep 'dropbear' | awk -F ":" {'print $4'} | xargs)"
+				echo -e "\033[1;32mSERVICO: \033[1;33mDROPBEAR \033[1;32mPORTA: \033[1;37m$(netstat -nplt | grep 'dropbear' | awk {'print $4'} | awk -F: '{print $NF}' | xargs)"
 				sts2="\033[1;32m◉ "
 			} || {
 				sts2="\033[1;31m○ "
