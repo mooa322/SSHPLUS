@@ -1,6 +1,6 @@
 #!/bin/bash
-# SSHPLUS: impede que apt/needrestart abram dialogos interativos que travam
-# o script para sempre (a saida vai toda para /dev/null, o usuario nao ve nada).
+# SSHPLUS: prevents apt/needrestart from opening interactive dialogs that hang
+# the script forever (all output goes to /dev/null, so the user sees nothing).
 export DEBIAN_FRONTEND=noninteractive
 export NEEDRESTART_MODE=a
 export NEEDRESTART_SUSPEND=1
@@ -10,23 +10,23 @@ if [ -f "/usr/local/bin/badvpn-udpgw" ]
 then
 	tput setaf 3 ; tput bold ; echo ""
 	echo ""
-	echo "O BadVPN já foi instalado com sucesso."
-	echo "Para executar, crie uma sessão screen"
-	echo "E execute o comando:"
+	echo "BadVPN has already been successfully installed."
+	echo "To run it, create a screen session"
+	echo "And run the command:"
 	echo ""
 	echo "badudp"
 	echo ""
-	echo "E deixe a sessão screen rodando em segundo plano."
+	echo "And leave the screen session running in the background."
 	echo "" ; tput sgr0
 	exit
 else
 tput setaf 2 ; tput bold ; echo ""
-echo -e "\033[1;36mEste é um script que compila e instala automaticamente o programa BadVPN em servidores Debian e Ubuntu para ativar o encaminhamento UDP na porta 7300, usado por programas como HTTP Injector da Evozi. Permitindo assim a utilização do protocolo UDP para jogos online, chamadas VoIP e outras coisas interessantes.\033[0m"
+echo -e "\033[1;36mThis is a script that automatically compiles and installs the BadVPN program on Debian and Ubuntu servers to enable UDP forwarding on port 7300, used by programs like Evozi's HTTP Injector. This allows the use of the UDP protocol for online games, VoIP calls, and other interesting things.\033[0m"
 echo "" ; tput sgr0
-read -p "Deseja continuar? [s/n]: " -e -i n resposta
-if [[ "$resposta" = 's' ]]; then
+read -p "Do you want to continue? [y/n]: " -e -i n resposta
+if [[ "$resposta" = 's' || "$resposta" = 'y' ]]; then
 	echo ""
-	echo -e "\033[1;31mA instalação pode demorar bastante... seja paciente!\033[0m"
+	echo -e "\033[1;31mThe installation may take a while... be patient!\033[0m"
 	sleep 3
 	timeout 300 apt-get update -y
 	timeout 300 apt-get install screen wget gcc build-essential g++ make cmake -y
@@ -47,10 +47,10 @@ if [[ "$resposta" = 's' ]]; then
 	clear
 	tput setaf 3 ; tput bold ; echo ""
 	echo ""
-	echo -e "\033[1;36mBadVPN instalado com sucesso. Para usar, crie uma sessão screen e execute o comando badudp e deixe a sessão screen rodando em segundo plano.\033[0m"
+	echo -e "\033[1;36mBadVPN successfully installed. To use it, create a screen session, run the badudp command, and leave the screen session running in the background.\033[0m"
 	echo "" ; tput sgr0
 	exit
-else 
+else
 	echo ""
 	exit
 fi
