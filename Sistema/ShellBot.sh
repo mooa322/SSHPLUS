@@ -1,49 +1,49 @@
 #!/bin/bash
 
 #-----------------------------------------------------------------------------------------------------------
-#	DATA:				07 de Março de 2017
+#	DATE:				March 07, 2017
 #	SCRIPT:				ShellBot.sh
-#	VERSÃO:				6.3.0
-#	DESENVOLVIDO POR:	Juliano Santos [SHAMAN]
-#	PÁGINA:				http://www.shellscriptx.blogspot.com.br
+#	VERSION:			6.3.0
+#	DEVELOPED BY:		Juliano Santos [SHAMAN]
+#	PAGE:				http://www.shellscriptx.blogspot.com.br
 #	FANPAGE:			https://www.facebook.com/shellscriptx
 #	GITHUB:				https://github.com/shellscriptx
-# 	CONTATO:			shellscriptx@gmail.com
+# 	CONTACT:			shellscriptx@gmail.com
 #
-#	DESCRIÇÃO:			ShellBot é uma API não-oficial desenvolvida para facilitar a criação de 
-#						bots na plataforma TELEGRAM. Constituída por uma coleção de métodos
-#						e funções que permitem ao desenvolvedor:
+#	DESCRIPTION:		ShellBot is an unofficial API developed to make it easier to create
+#						bots on the TELEGRAM platform. It consists of a collection of methods
+#						and functions that let the developer:
 #
-#							* Gerenciar grupos, canais e membros.
-#							* Enviar mensagens, documentos, músicas, contatos e etc.
-#							* Enviar teclados (KeyboardMarkup e InlineKeyboard).
-#							* Obter informações sobre membros, arquivos, grupos e canais.
-#							* Para mais informações consulte a documentação:
-#							  
+#							* Manage groups, channels and members.
+#							* Send messages, documents, music, contacts, etc.
+#							* Send keyboards (KeyboardMarkup and InlineKeyboard).
+#							* Get information about members, files, groups and channels.
+#							* For more information, see the documentation:
+#
 #							https://github.com/shellscriptx/ShellBot/wiki
 #
-#						O ShellBot mantém o padrão da nomenclatura dos métodos registrados da
-#						API original (Telegram), assim como seus campos e valores. Os métodos
-#						requerem parâmetros e argumentos para a chamada e execução. Parâmetros
-#						obrigatórios retornam uma mensagem de erro caso o argumento seja omitido.
-#					
-#	NOTAS:				Desenvolvida na linguagem Shell Script, utilizando o interpretador de 
-#						comandos BASH e explorando ao máximo os recursos built-in do mesmo,
-#						reduzindo o nível de dependências de pacotes externos.
+#						ShellBot keeps the naming convention of the original API's
+#						(Telegram) registered methods, as well as their fields and values. The
+#						methods require parameters and arguments to be called and executed. Required
+#						parameters return an error message if the argument is omitted.
+#
+#	NOTES:				Developed in the Shell Script language, using the BASH command
+#						interpreter and making the most of its built-in features,
+#						reducing the level of dependency on external packages.
 #-----------------------------------------------------------------------------------------------------------
 
 [[ $_SHELLBOT_SH_ ]] && return 1
 
 if ! awk 'BEGIN { exit ARGV[1] < 4.3 }' ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}; then
-	echo "${BASH_SOURCE:-${0##*/}}: erro: requer o interpretador de comandos 'bash 4.3' ou superior." 1>&2
+	echo "${BASH_SOURCE:-${0##*/}}: error: requires the 'bash 4.3' command interpreter or higher." 1>&2
 	exit 1
 fi
 
-# Informações
+# Information
 readonly -A _SHELLBOT_=(
 [name]='ShellBot'
 [keywords]='Shell Script Telegram API'
-[description]='API não-oficial para criação de bots na plataforma Telegram.'
+[description]='Unofficial API for creating bots on the Telegram platform.'
 [version]='6.0'
 [language]='shellscript'
 [shell]=${SHELL}
@@ -55,25 +55,25 @@ readonly -A _SHELLBOT_=(
 [packages]='curl 7.0, getopt 2.0, jq 1.5'
 )
 
-# Verifica dependências.
+# Checks dependencies.
 while read _pkg_ _ver_; do
 	if command -v $_pkg_ &>/dev/null; then
 		if [[ $($_pkg_ --version 2>&1) =~ [0-9]+\.[0-9]+ ]]; then
 			if ! awk 'BEGIN { exit ARGV[1] < ARGV[2] }' $BASH_REMATCH $_ver_; then
-				printf "%s: erro: requer o pacote '%s %s' ou superior.\n" ${_SHELLBOT_[name]} $_pkg_ $_ver_ 1>&2
+				printf "%s: error: requires the '%s %s' package or higher.\n" ${_SHELLBOT_[name]} $_pkg_ $_ver_ 1>&2
 				exit 1
 			fi
 		else
-			printf "%s: erro: '%s' não foi possível obter a versão.\n" ${_SHELLBOT_[name]} $_pkg_ 1>&2
+			printf "%s: error: '%s' could not get the version.\n" ${_SHELLBOT_[name]} $_pkg_ 1>&2
 			exit 1
 		fi
 	else
-		printf "%s: erro: '%s' o pacote requerido está ausente.\n" ${_SHELLBOT_[name]} $_pkg_ 1>&2
+		printf "%s: error: '%s' the required package is missing.\n" ${_SHELLBOT_[name]} $_pkg_ 1>&2
 		exit 1
 	fi
 done <<< "${_SHELLBOT_[packages]//,/$'\n'}"
 
-# bash (opções).
+# bash (options).
 shopt -s	checkwinsize			\
 			cmdhist					\
 			complete_fullquote		\
@@ -87,36 +87,36 @@ shopt -s	checkwinsize			\
 			promptvars				\
 			sourcepath
 
-# Desabilita a expansão de nomes de arquivos (globbing).
+# Disable filename expansion (globbing).
 set -f
 
-readonly _SHELLBOT_SH_=1					# Inicialização
+readonly _SHELLBOT_SH_=1					# Initialization
 readonly _BOT_SCRIPT_=${0##*/}				# Script
-readonly _CURL_OPT_='--silent --request'	# CURL (opções)
+readonly _CURL_OPT_='--silent --request'	# CURL (options)
 
-# Erros
-readonly _ERR_TYPE_BOOL_='tipo incompatível: suporta somente "true" ou "false".'
-readonly _ERR_TYPE_INT_='tipo incompatível: suporta somente inteiro.'
-readonly _ERR_TYPE_FLOAT_='tipo incompatível: suporta somente float.'
-readonly _ERR_PARAM_REQUIRED_='opção requerida: verique se o(s) parâmetro(s) ou argumento(s) obrigatório(s) estão presente(s).'
-readonly _ERR_TOKEN_UNAUTHORIZED_='não autorizado: verifique se possui permissões para utilizar o token.'
-readonly _ERR_TOKEN_INVALID_='token inválido: verique o número do token e tente novamente.'
-readonly _ERR_BOT_ALREADY_INIT_='ação não permitida: o bot já foi inicializado.'
-readonly _ERR_FILE_NOT_FOUND_='falha ao acessar: não foi possível ler o arquivo.'
-readonly _ERR_DIR_WRITE_DENIED_='permissão negada: não é possível gravar no diretório.'
-readonly _ERR_DIR_NOT_FOUND_='Não foi possível acessar: diretório não encontrado.'
-readonly _ERR_FILE_INVALID_ID_='id inválido: arquivo não encontrado.'
-readonly _ERR_UNKNOWN_='erro desconhecido: ocorreu uma falha inesperada. Reporte o problema ao desenvolvedor.'
-readonly _ERR_SERVICE_NOT_ROOT_='acesso negado: requer privilégios de root.'
-readonly _ERR_SERVICE_EXISTS_='erro ao criar o serviço: o nome do serviço já existe.'
-readonly _ERR_SERVICE_SYSTEMD_NOT_FOUND_='erro ao ativar: o sistema não possui suporte ao gerenciamento de serviços "systemd".'
-readonly _ERR_SERVICE_USER_NOT_FOUND_='usuário não encontrado: a conta de usuário informada é inválida.'
-readonly _ERR_VAR_NAME_='variável não encontrada: o identificador é inválido ou não existe.'
-readonly _ERR_FUNCTION_NOT_FOUND_='função não encontrada: o identificador especificado é inválido ou não existe.'
-readonly _ERR_ARG_='argumento inválido: o argumento não é suportado pelo parâmetro especificado.'
-readonly _ERR_RULE_ALREADY_EXISTS_='falha ao definir: o nome da regra já existe.'
-readonly _ERR_HANDLE_EXISTS_='erro ao registar: já existe um handle vinculado ao callback'
-readonly _ERR_CONNECTION_='falha de conexão: não foi possível estabelecer conexão com o Telegram.'
+# Errors
+readonly _ERR_TYPE_BOOL_='incompatible type: only supports "true" or "false".'
+readonly _ERR_TYPE_INT_='incompatible type: only supports integer.'
+readonly _ERR_TYPE_FLOAT_='incompatible type: only supports float.'
+readonly _ERR_PARAM_REQUIRED_='required option: check whether the required parameter(s) or argument(s) are present.'
+readonly _ERR_TOKEN_UNAUTHORIZED_='unauthorized: check whether you have permission to use the token.'
+readonly _ERR_TOKEN_INVALID_='invalid token: check the token number and try again.'
+readonly _ERR_BOT_ALREADY_INIT_='action not allowed: the bot has already been initialized.'
+readonly _ERR_FILE_NOT_FOUND_='access failed: could not read the file.'
+readonly _ERR_DIR_WRITE_DENIED_='permission denied: cannot write to the directory.'
+readonly _ERR_DIR_NOT_FOUND_='Could not access: directory not found.'
+readonly _ERR_FILE_INVALID_ID_='invalid id: file not found.'
+readonly _ERR_UNKNOWN_='unknown error: an unexpected failure occurred. Report the problem to the developer.'
+readonly _ERR_SERVICE_NOT_ROOT_='access denied: requires root privileges.'
+readonly _ERR_SERVICE_EXISTS_='error creating the service: the service name already exists.'
+readonly _ERR_SERVICE_SYSTEMD_NOT_FOUND_='activation error: the system does not support "systemd" service management.'
+readonly _ERR_SERVICE_USER_NOT_FOUND_='user not found: the provided user account is invalid.'
+readonly _ERR_VAR_NAME_='variable not found: the identifier is invalid or does not exist.'
+readonly _ERR_FUNCTION_NOT_FOUND_='function not found: the specified identifier is invalid or does not exist.'
+readonly _ERR_ARG_='invalid argument: the argument is not supported by the specified parameter.'
+readonly _ERR_RULE_ALREADY_EXISTS_='failed to define: the rule name already exists.'
+readonly _ERR_HANDLE_EXISTS_='error registering: a handle is already bound to the callback'
+readonly _ERR_CONNECTION_='connection failure: could not establish a connection to Telegram.'
 
 # Maps
 declare -A _BOT_HANDLE_
@@ -390,20 +390,20 @@ MethodReturn()
 
 MessageError()
 {
-	# Variáveis locais
+	# Local variables
 	local err_message err_param assert i
-	
-	# A variável 'BASH_LINENO' é dinâmica e armazena o número da linha onde foi expandida.
-	# Quando chamada dentro de um subshell, passa ser instanciada como um array, armazenando diversos
-	# valores onde cada índice refere-se a um shell/subshell. As mesmas caracteristicas se aplicam a variável
-	# 'FUNCNAME', onde é armazenado o nome da função onde foi chamada.
-	
-	# Obtem o índice da função na hierarquia de chamada.
+
+	# The 'BASH_LINENO' variable is dynamic and stores the line number where it was expanded.
+	# When called inside a subshell, it gets instantiated as an array, storing several
+	# values where each index refers to a shell/subshell. The same characteristics apply to the
+	# 'FUNCNAME' variable, which stores the name of the function it was called from.
+
+	# Gets the function's index in the call hierarchy.
 	[[ ${FUNCNAME[1]} == CheckArgType ]] && i=2 || i=1
-	
-	# Lê o tipo de ocorrência.
-	# TG - Erro externo retornado pelo core do telegram.
-	# API - Erro interno gerado pela API do ShellBot.
+
+	# Reads the occurrence type.
+	# TG - External error returned by Telegram's core.
+	# API - Internal error generated by the ShellBot API.
 	case $1 in
 		TG)
 			err_param="$(Json '.error_code' ${*:2})"
@@ -416,15 +416,15 @@ MessageError()
 			;;
 	esac
 
-	# Imprime erro
-	printf "%s: erro: linha %s: %s: %s: %s\n"					\
+	# Prints the error
+	printf "%s: error: line %s: %s: %s: %s\n"					\
 							"${_BOT_SCRIPT_}"					\
 							"${BASH_LINENO[$i]:--}" 			\
 							"${FUNCNAME[$i]:--}" 				\
 							"${err_param:--}" 					\
-							"${err_message:-$_ERR_UNKNOWN_}" 	1>&2 
+							"${err_message:-$_ERR_UNKNOWN_}" 	1>&2
 
-	# Finaliza script/thread em caso de erro interno, caso contrário retorna 1
+	# Terminates the script/thread on an internal error, otherwise returns 1
 	${assert:-false} && exit 1 || return 1
 }
 
