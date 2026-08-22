@@ -55,6 +55,7 @@ wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Slowdns/slowdns-drop
 wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Slowdns/slowdns-ssh; chmod +x slowdns-ssh
 wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Slowdns/slowdns-ssl; chmod +x slowdns-ssl
 wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Slowdns/slowdns-socks; chmod +x slowdns-socks
+wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Slowdns/slowdns-ovpn; chmod +x slowdns-ovpn
 wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Slowdns/slowdns; chmod +x slowdns; cp slowdns /bin/
 wget https://raw.githubusercontent.com/mooa322/SSHPLUS/main/Slowdns/stopdns; chmod +x stopdns
 }
